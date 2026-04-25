@@ -168,24 +168,5 @@ namespace RiskPortal.Controllers
             TempData["SuccessMessage"] = $"¡Éxito! La solicitud #REQ-{solicitud.Id:D4} por {solicitud.MontoSolicitado:C} ha sido registrada y está en evaluación.";
             return RedirectToAction(nameof(Create));
         }
-
-        // POST: Solicitudes/CambiarEstado
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CambiarEstado(int id, EstadoSolicitud nuevoEstado)
-        {
-            var solicitud = await _context.Solicitudes.Include(s => s.Cliente).FirstOrDefaultAsync(s => s.Id == id);
-            if (solicitud == null) return NotFound();
-
-            solicitud.Estado = nuevoEstado;
-            await _context.SaveChangesAsync();
-
-            // Invalidar Cache (Se actualizó el estado)
-            await _cache.RemoveAsync($"solicitudes_{User.Identity?.Name ?? "anonymous"}");
-            if (solicitud.Cliente?.UsuarioId != null)
-                await _cache.RemoveAsync($"solicitudes_{solicitud.Cliente.UsuarioId}");
-
-            return RedirectToAction(nameof(Details), new { id = id });
-        }
     }
 }

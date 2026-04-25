@@ -17,16 +17,8 @@ namespace RiskPortal.Data
             var userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();
             var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-            // --- REINICIO FORZADO DE BASE DE DATOS ---
-            // 1. Obligamos a SQLite a soltar el archivo para evitar el error de bloqueo
-            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-            
-            // 2. Destruimos cualquier base de datos residual
-            await context.Database.EnsureDeletedAsync();
-            
-            // 3. Creamos todo desde cero sin depender de las migraciones
+            // Creamos todas las tablas desde cero en el nuevo archivo
             await context.Database.EnsureCreatedAsync();
-            // -----------------------------------------
 
             // 1. Crear Rol Analista
             if (!await roleManager.RoleExistsAsync("Analista"))
