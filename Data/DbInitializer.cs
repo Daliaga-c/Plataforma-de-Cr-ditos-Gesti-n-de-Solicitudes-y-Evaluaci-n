@@ -24,8 +24,8 @@ namespace RiskPortal.Data
             // 2. Destruimos cualquier base de datos residual
             await context.Database.EnsureDeletedAsync();
             
-            // 3. Aplicamos tu migración inicial de forma limpia y oficial
-            await context.Database.MigrateAsync();
+            // 3. Creamos todo desde cero sin depender de las migraciones
+            await context.Database.EnsureCreatedAsync();
             // -----------------------------------------
 
             // 1. Crear Rol Analista
