@@ -280,3 +280,4 @@ C:\Users\diego\OneDrive\Escritorio\Proyectos\Programacion I\Plataforma de Crédi
 C:\Users\diego\OneDrive\Escritorio\Proyectos\Programacion I\Plataforma de Créditos — Gestión de Solicitudes y Evaluación\obj\Debug\net10.0\Plataforma de Créditos — Gestión de Solicitudes y Evaluación.pdb
 C:\Users\diego\OneDrive\Escritorio\Proyectos\Programacion I\Plataforma de Créditos — Gestión de Solicitudes y Evaluación\obj\Debug\net10.0\Plataforma de Créditos — Gestión de Solicitudes y Evaluación.genruntimeconfig.cache
 C:\Users\diego\OneDrive\Escritorio\Proyectos\Programacion I\Plataforma de Créditos — Gestión de Solicitudes y Evaluación\obj\Debug\net10.0\ref\Plataforma de Créditos — Gestión de Solicitudes y Evaluación.dll
+C:\Users\diego\OneDrive\Escritorio\Proyectos\Programacion I\Plataforma de Créditos — Gestión de Solicitudes y Evaluación\obj\Debug\net10.0\compressed\ot6gni9qpn-{0}-wee75iwy8h-wee75iwy8h.gz

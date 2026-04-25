@@ -1,0 +1,78 @@
+@model RiskPortal.Models.SolicitudFilterViewModel
+@{
+    ViewData["Title"] = "Mis Solicitudes";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold mb-0">Catálogo de Solicitudes</h3>
+    <a asp-action="Create" class="btn btn-primary-orange"><i class="bi bi-plus-lg"></i> Nueva Solicitud</a>
+</div>
+
+<!-- Panel de Filtros -->
+<div class="card p-4 mb-4">
+    <form asp-action="Index" method="get">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label asp-for="Estado" class="form-label fw-bold text-muted-soft"></label>
+                <select asp-for="Estado" class="form-select bg-light border-0" asp-items="Html.GetEnumSelectList<RiskPortal.Models.EstadoSolicitud>()">
+                    <option value="">Todos los estados</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label asp-for="MontoMinimo" class="form-label fw-bold text-muted-soft"></label>
+                <input asp-for="MontoMinimo" class="form-control bg-light border-0" placeholder="$0.00" type="number" step="0.01" />
+            </div>
+            <div class="col-md-2">
+                <label asp-for="MontoMaximo" class="form-label fw-bold text-muted-soft"></label>
+                <input asp-for="MontoMaximo" class="form-control bg-light border-0" placeholder="$0.00" type="number" step="0.01" />
+            </div>
+            <div class="col-md-2">
+                <label asp-for="FechaInicio" class="form-label fw-bold text-muted-soft"></label>
+                <input asp-for="FechaInicio" class="form-control bg-light border-0" />
+            </div>
+            <div class="col-md-2">
+                <label asp-for="FechaFin" class="form-label fw-bold text-muted-soft"></label>
+                <input asp-for="FechaFin" class="form-control bg-light border-0" />
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="submit" class="btn btn-dark w-100"><i class="bi bi-funnel"></i></button>
+            </div>
+        </div>
+        <div asp-validation-summary="All" class="text-danger mt-3 fw-bold list-unstyled"></div>
+    </form>
+</div>
+
+<!-- Tabla de Resultados -->
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-muted-soft">
+                    <tr>
+                        <th class="ps-4">ID Solicitud</th>
+                        <th>Cliente ID</th>
+                        <th>Monto</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th class="text-end pe-4">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Solicitudes)
+                    {
+                        <tr>
+                            <td class="ps-4 fw-bold">#REQ-@item.Id.ToString("D4")</td>
+                            <td>@(item.Cliente?.UsuarioId ?? "N/A")</td>
+                            <td>@item.MontoSolicitado.ToString("C")</td>
+                            <td>@item.FechaSolicitud.ToString("dd MMM, yyyy")</td>
+                            <td>
+                                <span class="badge @(item.Estado == RiskPortal.Models.EstadoSolicitud.Aprobado ? "bg-success" : item.Estado == RiskPortal.Models.EstadoSolicitud.Rechazado ? "bg-danger" : "bg-warning text-dark")">@item.Estado</span>
+                            </td>
+                            <td class="text-end pe-4"><a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-light border">Ver Detalle</a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
