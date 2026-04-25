@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using RiskPortal.Models;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -16,8 +17,16 @@ namespace RiskPortal.Data
             var userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();
             var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-            // Asegura que la BD esté creada y migrada
+            // --- REINICIO FORZADO DE BASE DE DATOS ---
+            // 1. Obligamos a SQLite a soltar el archivo para evitar el error de bloqueo
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            
+            // 2. Destruimos cualquier base de datos residual
+            await context.Database.EnsureDeletedAsync();
+            
+            // 3. Aplicamos tu migración inicial de forma limpia y oficial
             await context.Database.MigrateAsync();
+            // -----------------------------------------
 
             // 1. Crear Rol Analista
             if (!await roleManager.RoleExistsAsync("Analista"))
@@ -38,40 +47,36 @@ namespace RiskPortal.Data
             // 3. Crear Clientes y Solicitudes
             if (!context.Clientes.Any())
             {
-                var cliente1 = new Cliente
+                var clientes = new List<Cliente>
                 {
-                    UsuarioId = "user-cli-1", // Referencia abstracta si el cliente no usa Identity aún
-                    IngresosMensuales = 3500.00m,
-                    Activo = true
+                    new Cliente { UsuarioId = "cliente1@riskportal.com", IngresosMensuales = 3500.00m, Activo = true },
+                    new Cliente { UsuarioId = "cliente2@riskportal.com", IngresosMensuales = 5000.00m, Activo = true },
+                    new Cliente { UsuarioId = "cliente3@riskportal.com", IngresosMensuales = 8200.00m, Activo = true },
+                    new Cliente { UsuarioId = "cliente4@riskportal.com", IngresosMensuales = 1500.00m, Activo = true },
+                    new Cliente { UsuarioId = "cliente5@riskportal.com", IngresosMensuales = 12000.00m, Activo = true }
                 };
 
-                var cliente2 = new Cliente
-                {
-                    UsuarioId = "user-cli-2",
-                    IngresosMensuales = 5000.00m,
-                    Activo = true
-                };
-
-                context.Clientes.AddRange(cliente1, cliente2);
+                context.Clientes.AddRange(clientes);
                 await context.SaveChangesAsync();
 
-                var solicitud1 = new SolicitudCredito
+                var solicitudes = new List<SolicitudCredito>
                 {
-                    ClienteId = cliente1.Id,
-                    MontoSolicitado = 10000.00m,
-                    FechaSolicitud = DateTime.UtcNow.AddDays(-2),
-                    Estado = EstadoSolicitud.Pendiente
+                    // Cliente 1
+                    new SolicitudCredito { ClienteId = clientes[0].Id, MontoSolicitado = 10000.00m, FechaSolicitud = DateTime.UtcNow.AddDays(-2), Estado = EstadoSolicitud.Pendiente },
+                    // Cliente 2
+                    new SolicitudCredito { ClienteId = clientes[1].Id, MontoSolicitado = 15000.00m, FechaSolicitud = DateTime.UtcNow.AddDays(-5), Estado = EstadoSolicitud.Aprobado },
+                    new SolicitudCredito { ClienteId = clientes[1].Id, MontoSolicitado = 3000.00m, FechaSolicitud = DateTime.UtcNow.AddDays(-30), Estado = EstadoSolicitud.Aprobado },
+                    // Cliente 3
+                    new SolicitudCredito { ClienteId = clientes[2].Id, MontoSolicitado = 40000.00m, FechaSolicitud = DateTime.UtcNow.AddDays(-10), Estado = EstadoSolicitud.Aprobado },
+                    new SolicitudCredito { ClienteId = clientes[2].Id, MontoSolicitado = 5000.00m, FechaSolicitud = DateTime.UtcNow.AddDays(-20), Estado = EstadoSolicitud.Rechazado, MotivoRechazo = "Historial crediticio insuficiente en su momento." },
+                    // Cliente 4
+                    new SolicitudCredito { ClienteId = clientes[3].Id, MontoSolicitado = 8000.00m, FechaSolicitud = DateTime.UtcNow.AddDays(-1), Estado = EstadoSolicitud.Rechazado, MotivoRechazo = "El monto excede su capacidad de pago (5x ingresos)." },
+                    // Cliente 5
+                    new SolicitudCredito { ClienteId = clientes[4].Id, MontoSolicitado = 50000.00m, FechaSolicitud = DateTime.UtcNow.AddDays(-15), Estado = EstadoSolicitud.Aprobado },
+                    new SolicitudCredito { ClienteId = clientes[4].Id, MontoSolicitado = 12000.00m, FechaSolicitud = DateTime.UtcNow, Estado = EstadoSolicitud.Pendiente }
                 };
 
-                var solicitud2 = new SolicitudCredito
-                {
-                    ClienteId = cliente2.Id,
-                    MontoSolicitado = 15000.00m, // Cumple regla: 15,000 <= 5000 * 5
-                    FechaSolicitud = DateTime.UtcNow.AddDays(-5),
-                    Estado = EstadoSolicitud.Aprobado
-                };
-
-                context.Solicitudes.AddRange(solicitud1, solicitud2);
+                context.Solicitudes.AddRange(solicitudes);
                 await context.SaveChangesAsync();
             }
         }
