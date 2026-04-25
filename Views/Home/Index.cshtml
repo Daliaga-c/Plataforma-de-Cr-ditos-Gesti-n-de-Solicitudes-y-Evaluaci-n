@@ -1,8 +1,87 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model IEnumerable<RiskPortal.Models.SolicitudCredito>
+@{
+    ViewData["Title"] = "Dashboard";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold mb-0">Resumen de Actividad</h3>
+    <span class="text-muted-soft">Últimos 30 días</span>
+</div>
+
+<!-- KPIs -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card p-3">
+            <div class="text-muted-soft fw-bold text-uppercase mb-2">Total Mes</div>
+            <h2 class="mb-0 fw-bold">@ViewBag.TotalMes</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 border-start border-4 border-warning">
+            <div class="text-muted-soft fw-bold text-uppercase mb-2">Pendientes</div>
+            <h2 class="mb-0 fw-bold">@ViewBag.Pendientes</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 border-start border-4 border-success">
+            <div class="text-muted-soft fw-bold text-uppercase mb-2">Aprobadas</div>
+            <h2 class="mb-0 fw-bold">@ViewBag.Aprobadas</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 border-start border-4 border-danger">
+            <div class="text-muted-soft fw-bold text-uppercase mb-2">Rechazadas</div>
+            <h2 class="mb-0 fw-bold">@ViewBag.Rechazadas</h2>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla de Solicitudes -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center py-3">
+        <h5 class="mb-0 fw-bold">Solicitudes Recientes</h5>
+        <a asp-controller="Solicitudes" asp-action="Index" class="btn btn-sm btn-outline-secondary">Ver Todas</a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-muted-soft">
+                    <tr>
+                        <th class="ps-4">ID Solicitud</th>
+                        <th>Cliente</th>
+                        <th>Monto Solicitado</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th class="text-end pe-4">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model == null || !Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">No hay solicitudes registradas aún.</td>
+                        </tr>
+                    }
+                    @if (Model != null)
+                    {
+                        foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="ps-4 fw-bold">#REQ-@item.Id.ToString("D4")</td>
+                            <td>@(item.Cliente?.UsuarioId ?? "Desconocido")</td>
+                            <td>@item.MontoSolicitado.ToString("C")</td>
+                            <td>@item.FechaSolicitud.ToString("dd MMM, yyyy")</td>
+                            <td>
+                                @if (item.Estado == RiskPortal.Models.EstadoSolicitud.Pendiente) { <span class="badge bg-warning text-dark">Pendiente</span> }
+                                else if (item.Estado == RiskPortal.Models.EstadoSolicitud.Aprobado) { <span class="badge bg-success">Aprobado</span> }
+                                else { <span class="badge bg-danger">Rechazado</span> }
+                            </td>
+                            <td class="text-end pe-4"><a asp-controller="Solicitudes" asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-light border">Revisar</a></td>
+                        </tr>
+                    }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
