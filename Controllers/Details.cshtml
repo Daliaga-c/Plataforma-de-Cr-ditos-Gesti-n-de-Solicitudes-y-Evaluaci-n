@@ -16,9 +16,17 @@
     
     @if (Model.Estado == RiskPortal.Models.EstadoSolicitud.Pendiente && User.IsInRole("Analista"))
     {
-        <div>
-            <button class="btn btn-outline-danger me-2"><i class="bi bi-x-circle"></i> Rechazar</button>
-            <button class="btn btn-success"><i class="bi bi-check-circle"></i> Aprobar Crédito</button>
+        <div class="d-flex gap-2">
+            <form asp-controller="Solicitudes" asp-action="CambiarEstado" method="post">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <input type="hidden" name="nuevoEstado" value="Rechazado" />
+                <button type="submit" class="btn btn-outline-danger"><i class="bi bi-x-circle"></i> Rechazar</button>
+            </form>
+            <form asp-controller="Solicitudes" asp-action="CambiarEstado" method="post">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <input type="hidden" name="nuevoEstado" value="Aprobado" />
+                <button type="submit" class="btn btn-success"><i class="bi bi-check-circle"></i> Aprobar Crédito</button>
+            </form>
         </div>
     }
 </div>

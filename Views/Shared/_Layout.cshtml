@@ -1,4 +1,6 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpAccessor
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8" />
@@ -51,6 +53,16 @@
                     </div>
                 </div>
                 <div class="topbar-actions d-flex align-items-center">
+                @{
+                    var ultimoId = HttpAccessor.HttpContext?.Session.GetString("UltimaSolicitudId");
+                    var ultimoMonto = HttpAccessor.HttpContext?.Session.GetString("UltimaSolicitudMonto");
+                }
+                @if (!string.IsNullOrEmpty(ultimoId))
+                {
+                    <a asp-controller="Solicitudes" asp-action="Details" asp-route-id="@ultimoId" class="text-decoration-none me-4 fw-bold" style="color: var(--rp-orange);">
+                        <i class="bi bi-clock-history"></i> Ver última solicitud @ultimoMonto
+                    </a>
+                }
                     <a href="#" class="text-muted fs-5 me-4 position-relative">
                         <i class="bi bi-bell"></i>
                         <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>

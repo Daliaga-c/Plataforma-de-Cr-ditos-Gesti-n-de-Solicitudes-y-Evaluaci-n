@@ -2,10 +2,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using RiskPortal.Data;
 using RiskPortal.Models;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 namespace RiskPortal.Controllers
 {
@@ -13,10 +17,12 @@ namespace RiskPortal.Controllers
     public class SolicitudesController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IDistributedCache _cache;
 
-        public SolicitudesController(ApplicationDbContext context)
+        public SolicitudesController(ApplicationDbContext context, IDistributedCache cache)
         {
             _context = context;
+            _cache = cache;
         }
 
         // GET: Solicitudes
@@ -29,36 +35,54 @@ namespace RiskPortal.Controllers
                 return View(filter);
             }
 
-            var query = _context.Solicitudes.Include(s => s.Cliente).AsQueryable();
-
-            // Requisito: "listado de solicitudes del usuario autenticado"
-            // Si el usuario NO es un Analista, filtramos solo sus propias solicitudes.
             var userId = User.Identity?.Name;
-            if (!User.IsInRole("Analista"))
+            var cacheKey = $"solicitudes_{userId}";
+            List<SolicitudCredito> listaBase = null;
+
+            // 1. Intentar obtener desde la Cache (Redis)
+            var cachedData = await _cache.GetStringAsync(cacheKey);
+            if (!string.IsNullOrEmpty(cachedData))
             {
-                query = query.Where(s => s.Cliente != null && s.Cliente.UsuarioId == userId);
+                listaBase = JsonSerializer.Deserialize<List<SolicitudCredito>>(cachedData, new JsonSerializerOptions { ReferenceHandler = ReferenceHandler.IgnoreCycles });
             }
 
-            // Aplicar Filtros
+            // 2. Si no hay cache, consultar DB y guardar en Redis por 60s
+            if (listaBase == null)
+            {
+                var query = _context.Solicitudes.Include(s => s.Cliente).AsQueryable();
+                if (!User.IsInRole("Analista"))
+                {
+                    query = query.Where(s => s.Cliente != null && s.Cliente.UsuarioId == userId);
+                }
+                listaBase = await query.OrderByDescending(s => s.FechaSolicitud).ToListAsync();
+
+                var cacheOptions = new DistributedCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromSeconds(60));
+                var serializedData = JsonSerializer.Serialize(listaBase, new JsonSerializerOptions { ReferenceHandler = ReferenceHandler.IgnoreCycles });
+                await _cache.SetStringAsync(cacheKey, serializedData, cacheOptions);
+            }
+
+            // 3. Aplicar Filtros en memoria sobre los datos cacheados
+            var queryableData = listaBase.AsQueryable();
+
             if (filter.Estado.HasValue)
-                query = query.Where(s => s.Estado == filter.Estado.Value);
+                queryableData = queryableData.Where(s => s.Estado == filter.Estado.Value);
 
             if (filter.MontoMinimo.HasValue)
-                query = query.Where(s => s.MontoSolicitado >= filter.MontoMinimo.Value);
+                queryableData = queryableData.Where(s => s.MontoSolicitado >= filter.MontoMinimo.Value);
 
             if (filter.MontoMaximo.HasValue)
-                query = query.Where(s => s.MontoSolicitado <= filter.MontoMaximo.Value);
+                queryableData = queryableData.Where(s => s.MontoSolicitado <= filter.MontoMaximo.Value);
 
             if (filter.FechaInicio.HasValue)
-                query = query.Where(s => s.FechaSolicitud >= filter.FechaInicio.Value);
+                queryableData = queryableData.Where(s => s.FechaSolicitud >= filter.FechaInicio.Value);
 
             if (filter.FechaFin.HasValue)
             {
                 var end = filter.FechaFin.Value.AddDays(1);
-                query = query.Where(s => s.FechaSolicitud < end);
+                queryableData = queryableData.Where(s => s.FechaSolicitud < end);
             }
 
-            filter.Solicitudes = await query.OrderByDescending(s => s.FechaSolicitud).ToListAsync();
+            filter.Solicitudes = queryableData.ToList();
 
             return View(filter);
         }
@@ -71,6 +95,10 @@ namespace RiskPortal.Controllers
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (solicitud == null) return NotFound();
+
+            // Guardar la última solicitud en la Sesión (Redis-backed)
+            HttpContext.Session.SetString("UltimaSolicitudId", solicitud.Id.ToString());
+            HttpContext.Session.SetString("UltimaSolicitudMonto", solicitud.MontoSolicitado.ToString("C"));
 
             return View(solicitud);
         }
@@ -133,9 +161,31 @@ namespace RiskPortal.Controllers
             _context.Solicitudes.Add(solicitud);
             await _context.SaveChangesAsync();
 
+            // Invalidar Cache (Se registró una nueva solicitud)
+            await _cache.RemoveAsync($"solicitudes_{User.Identity?.Name ?? "anonymous"}");
+
             // 5. Feedback Claro en la misma vista de creación
             TempData["SuccessMessage"] = $"¡Éxito! La solicitud #REQ-{solicitud.Id:D4} por {solicitud.MontoSolicitado:C} ha sido registrada y está en evaluación.";
             return RedirectToAction(nameof(Create));
+        }
+
+        // POST: Solicitudes/CambiarEstado
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CambiarEstado(int id, EstadoSolicitud nuevoEstado)
+        {
+            var solicitud = await _context.Solicitudes.Include(s => s.Cliente).FirstOrDefaultAsync(s => s.Id == id);
+            if (solicitud == null) return NotFound();
+
+            solicitud.Estado = nuevoEstado;
+            await _context.SaveChangesAsync();
+
+            // Invalidar Cache (Se actualizó el estado)
+            await _cache.RemoveAsync($"solicitudes_{User.Identity?.Name ?? "anonymous"}");
+            if (solicitud.Cliente?.UsuarioId != null)
+                await _cache.RemoveAsync($"solicitudes_{solicitud.Cliente.UsuarioId}");
+
+            return RedirectToAction(nameof(Details), new { id = id });
         }
     }
 }
