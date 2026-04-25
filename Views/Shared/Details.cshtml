@@ -1,0 +1,38 @@
+@model RiskPortal.Models.SolicitudCredito
+
+@{
+    ViewData["Title"] = "Detalles de Solicitud";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Detalles de la Solicitud #REQ-@Model.Id.ToString("D4")</h2>
+    <a asp-action="Index" class="btn btn-outline-secondary">Volver al Catálogo</a>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body p-4">
+        <h4 class="card-title text-primary mb-4">Información del Crédito</h4>
+        
+        <dl class="row mb-0">
+            <dt class="col-sm-3 text-muted">Cliente (ID Usuario)</dt>
+            <dd class="col-sm-9 fw-bold">@(Model.Cliente?.UsuarioId ?? "N/A")</dd>
+
+            <dt class="col-sm-3 text-muted">Monto Solicitado</dt>
+            <dd class="col-sm-9 fs-5 text-success">@Model.MontoSolicitado.ToString("C")</dd>
+
+            <dt class="col-sm-3 text-muted">Fecha de Solicitud</dt>
+            <dd class="col-sm-9">@Model.FechaSolicitud.ToString("dd/MM/yyyy HH:mm")</dd>
+
+            <dt class="col-sm-3 text-muted">Estado</dt>
+            <dd class="col-sm-9">
+                <span class="badge @(Model.Estado.ToString() == "Pendiente" ? "bg-warning text-dark" : Model.Estado.ToString() == "Aprobado" ? "bg-success" : "bg-danger")">@Model.Estado</span>
+            </dd>
+
+            @if (Model.Estado.ToString() == "Rechazado" && !string.IsNullOrEmpty(Model.MotivoRechazo))
+            {
+                <dt class="col-sm-3 text-danger mt-3">Motivo de Rechazo</dt>
+                <dd class="col-sm-9 text-danger mt-3">@Model.MotivoRechazo</dd>
+            }
+        </dl>
+    </div>
+</div>
