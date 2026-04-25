@@ -12,6 +12,9 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 COPY --from=build /app/publish .
 
+# Ejecutar como root temporalmente para permitir a SQLite crear la base de datos
+USER root
+
 # Exponemos el puerto 8080 (por defecto en .NET 8)
 EXPOSE 8080
 
