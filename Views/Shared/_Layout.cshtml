@@ -31,15 +31,29 @@
                 <a class="nav-link" asp-controller="Clientes" asp-action="Index">
                     <i class="bi bi-people"></i> Clientes
                 </a>
+                @if (User.IsInRole("Analista"))
+                {
+                    <a class="nav-link text-warning" asp-controller="Analista" asp-action="Index">
+                        <i class="bi bi-shield-lock"></i> Panel Analista
+                    </a>
+                }
             </div>
             
             <!-- Perfil Usuario -->
-            <div class="user-profile d-flex align-items-center mt-auto">
-                <img src="https://ui-avatars.com/api/?name=Analista+Riesgo&background=F27121&color=fff" class="rounded-circle me-3" width="40" alt="Avatar">
-                <div>
-                    <h6 class="mb-0 text-white">Juan Pérez</h6>
-                    <small class="text-muted">Analista Riesgo</small>
+            <div class="user-profile d-flex align-items-center mt-auto justify-content-between">
+                <div class="d-flex align-items-center overflow-hidden">
+                    <img src="https://ui-avatars.com/api/?name=@(User.Identity?.Name ?? "U")&background=F27121&color=fff" class="rounded-circle me-3" width="40" alt="Avatar">
+                    <div class="text-truncate pe-2">
+                        <h6 class="mb-0 text-white text-truncate" style="max-width: 120px;" title="@User.Identity?.Name">@(User.Identity?.Name ?? "Invitado")</h6>
+                        <small class="text-muted">@(User.IsInRole("Analista") ? "Analista Riesgo" : "Cliente")</small>
+                    </div>
                 </div>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/" method="post" class="m-0 p-0">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary border-0 text-white" title="Cerrar Sesión"><i class="bi bi-box-arrow-right fs-5"></i></button>
+                    </form>
+                }
             </div>
         </nav>
 
