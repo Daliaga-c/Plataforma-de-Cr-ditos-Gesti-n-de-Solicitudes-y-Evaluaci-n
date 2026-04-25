@@ -16,7 +16,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Plataforma de Créditos — Gestión de Solicitudes y Evaluación")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a0c089ef57f1dc40d4686cd1834f4cba94f56aa7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+98f1d6525efdb67ac7912da81fca6a55a7e1eb92")]
 [assembly: System.Reflection.AssemblyProductAttribute("Plataforma de Créditos — Gestión de Solicitudes y Evaluación")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Plataforma de Créditos — Gestión de Solicitudes y Evaluación")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
